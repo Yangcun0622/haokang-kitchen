@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>撇脱厨房 · 杨存私厨工作台</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- 侧边导航 -->
+    <nav class="nav">
+      <div class="brand">
+        <b>撇脱厨房</b>
+        <span>杨存 · 重庆私厨工作台</span>
+        <span class="sync-dot" id="sync_dot" title="跨设备实时接单：手机点单电脑秒收">● 实时接单</span>
+      </div>
+      <a data-p="recipe" class="active">🍲 菜品库</a>
+      <a data-p="customer">👥 顾客管理</a>
+      <a data-p="order">📝 订单出餐</a>
+      <a data-p="daily">📊 每日业绩</a>
+      <a data-p="expense">💰 店铺支出</a>
+      <a data-p="print">🖨 打印中心</a>
+      <a data-p="done">✅ 已处理订单</a>
+    </nav>
+
+    <main class="main">
+      <!-- 菜品库 -->
+      <section class="page active" id="p_recipe">
+        <h2>菜品库 · 适配重庆口味</h2>
+        <div class="sub">按菜系分类浏览，点「查看配方 / 打印」可单独打印一张带图文步骤的菜谱。</div>
+        <div id="recipe_chips" class="no-print" style="margin-bottom:16px"></div>
+        <div id="recipe_cards" class="grid cards"></div>
+      </section>
+
+      <!-- 顾客管理 -->
+      <section class="page" id="p_customer">
+        <h2>顾客管理</h2>
+        <div class="sub">记录顾客的姓名、电话、地址、下班时间与忌口，出餐单会自动带入。</div>
+        <div class="card no-print" style="margin-bottom:18px">
+          <form id="cust_form">
+            <div class="form-row">
+              <div><label>姓名 *</label><input id="f_cust_name" required placeholder="如：张姐"></div>
+              <div><label>电话</label><input id="f_cust_phone" placeholder="138****0000"></div>
+              <div><label>下班时间</label><input id="f_cust_off" placeholder="18:30"></div>
+            </div>
+            <div class="form-row">
+              <div style="grid-column:1/-1"><label>地址</label><input id="f_cust_addr" placeholder="如：渝中区大坪时代天街3栋1802"></div>
+            </div>
+            <div class="form-row">
+              <div style="grid-column:1/-1"><label>忌口 / 偏好</label><input id="f_cust_taboo" placeholder="如：不吃香菜、微辣、海鲜过敏"></div>
+            </div>
+            <button class="btn" id="cust_submit" type="submit">添加顾客</button>
+          </form>
+        </div>
+        <table><thead><tr><th>姓名</th><th>电话</th><th>地址</th><th>下班时间</th><th>忌口</th><th class="no-print">操作</th></tr></thead>
+          <tbody id="cust_table"></tbody></table>
+      </section>
+
+      <!-- 订单出餐 -->
+      <section class="page" id="p_order">
+        <h2>订单出餐</h2>
+        <div class="sub">选顾客 + 菜品 + 预约送达时间，录入后可在「打印中心」一键生成出餐配送单。</div>
+        <div class="card no-print" style="margin-bottom:18px">
+          <form id="order_form">
+            <div class="form-row">
+              <div><label>日期</label><input id="o_date" type="date"></div>
+              <div><label>顾客</label><select id="o_cust"></select></div>
+              <div><label>菜品</label>
+                <div class="dish-picker">
+                  <input id="o_dish_search" placeholder="输入菜名检索…（如：青椒、牛肉）" autocomplete="off">
+                  <input type="hidden" id="o_dish" value="">
+                  <div id="o_dish_list" class="dish-list"></div>
+                </div>
+              </div>
+              <div><label>份数</label><input id="o_qty" type="number" min="1" value="1"></div>
+              <div><label>单价(元/份)</label><input id="o_price" type="number" min="0" step="0.01" placeholder="填单价算业绩"></div>
+            </div>
+            <div class="form-row">
+              <div><label>预约送达时间</label><input id="o_deliver" placeholder="如：19:00"></div>
+              <div style="grid-column:2/-1"><label>本次忌口（留空则用顾客默认忌口）</label><input id="o_taboo" placeholder="如：微辣不要香菜"></div>
+            </div>
+            <div class="form-row">
+              <div style="grid-column:1/-1"><label>备注</label><textarea id="o_note" placeholder="如：放门口、电话联系"></textarea></div>
+            </div>
+            <button class="btn" type="submit">录入订单</button>
+          </form>
+        </div>
+        <div class="batch-bar no-print" style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+          <button class="btn sm ghost" id="o_del_sel" style="color:#c0392b;border-color:#c0392b">🗑 删除选中</button>
+          <span id="o_sel_info" class="muted" style="font-size:13px;color:var(--muted)">勾选左侧复选框可批量删除</span>
+        </div>
+        <table><thead><tr><th class="no-print"><input type="checkbox" id="o_selall" title="全选"></th><th>下单时间</th><th>顾客</th><th>菜品</th><th>订单码</th><th>状态</th><th>送达</th><th>忌口</th><th class="no-print">操作</th></tr></thead>
+          <tbody id="order_table"></tbody></table>
+
+        <div class="card no-print" style="margin-top:18px">
+          <b>📥 粘贴顾客订单（跨设备接单）</b>
+          <p class="sub" style="margin:6px 0 10px">顾客在自己手机打开「点菜页」提交后，会生成 6 位订单码。同源时订单已自动进入本库（按订单码核对）；也可把完整订单复制发给你，粘贴到下方导入。</p>
+          <div class="form-row">
+            <div style="grid-column:1/-1"><textarea id="paste_order" rows="3" placeholder="在此粘贴顾客发来的订单码（以 { 开头）…"></textarea></div>
+          </div>
+          <button class="btn" onclick="APP.importCustomerOrder()">导入订单</button>
+          <a id="order_link" class="btn ghost" style="margin-left:8px" target="_blank">🔗 打开顾客点菜页</a>
+        </div>
+      </section>
+
+      <!-- 每日业绩 -->
+      <section class="page" id="p_daily">
+        <h2>每日业绩总表</h2>
+        <div class="sub">按日期自动汇总订单营收、支出与净利；数据来自「订单出餐」和「店铺支出」。</div>
+        <div id="daily_stat" class="stat"></div>
+        <table><thead><tr><th>日期</th><th>订单数</th><th>份数</th><th>营业额</th><th>支出</th><th>净利</th><th>客单价</th></tr></thead>
+          <tbody id="daily_table"></tbody></table>
+      </section>
+
+      <!-- 店铺支出 -->
+      <section class="page" id="p_expense">
+        <h2>店铺支出</h2>
+        <div class="sub">记录每日食材采购、包装、燃气水电等支出，业绩表会自动抵扣。</div>
+        <div class="card no-print" style="margin-bottom:18px">
+          <form id="exp_form">
+            <div class="form-row">
+              <div><label>日期</label><input id="e_date" type="date"></div>
+              <div><label>类别</label><input id="e_cat" placeholder="如：食材采购 / 包装耗材 / 燃气水电"></div>
+              <div><label>金额(元)</label><input id="e_amount" type="number" min="0" step="0.01" placeholder="0.00"></div>
+            </div>
+            <div class="form-row">
+              <div style="grid-column:1/-1"><label>备注</label><input id="e_note" placeholder="选填"></div>
+            </div>
+            <button class="btn" type="submit">添加支出</button>
+          </form>
+        </div>
+        <div id="exp_total" class="tip no-print"></div>
+        <table><thead><tr><th>日期</th><th>类别</th><th>金额</th><th>备注</th><th class="no-print">操作</th></tr></thead>
+          <tbody id="exp_table"></tbody></table>
+      </section>
+
+      <!-- 打印中心 -->
+      <section class="page" id="p_print">
+        <h2>打印中心 · 出餐配送单</h2>
+        <div class="sub">选择日期，下方自动列出当天所有订单的出餐单（含菜品名称、材料清单、图文步骤、顾客地址忌口与送达时间），可直接打印。</div>
+        <div class="no-print toolbar" style="margin-bottom:14px">
+          <label style="display:inline-block;margin-right:10px">选择日期</label>
+          <select id="print_date" style="width:auto;display:inline-block"></select>
+          <label style="margin-left:12px;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="print_all"> 全选当天</label>
+          <label style="margin-left:12px;display:inline-flex;align-items:center;gap:4px">订单码检索
+            <input id="print_code" placeholder="输入6位订单码" style="width:140px;display:inline-block;margin-left:4px"></label>
+          <button class="btn gold" style="margin-left:10px" onclick="APP.printSelected()">🖨 打印所选（<span id="sel_count">0</span>）</button>
+          <button class="btn" style="margin-left:8px" onclick="window.print()">整页打印</button>
+          <button class="btn ghost" style="margin-left:8px" onclick="APP.exportData()">⬇ 导出数据</button>
+          <input type="file" id="import_file" accept="application/json" style="display:none" onchange="if(this.files[0]){APP.importData(this.files[0]);this.value='';}">
+          <button class="btn ghost" style="margin-left:8px" onclick="document.getElementById('import_file').click()">⬆ 导入数据</button>
+          <button class="btn ghost" id="btn_clear" style="margin-left:8px;color:#c0392b;border-color:#c0392b">清空全部数据</button>
+        </div>
+        <div id="print_area"></div>
+      </section>
+
+      <!-- 已处理订单 -->
+      <section class="page" id="p_done">
+        <h2>已处理订单</h2>
+        <div class="sub">在「打印中心」打印出餐单后，订单会自动归到这里。可重新打印，或退回「待打印」重新出现在打印中心。</div>
+        <div id="done_stat" class="tip no-print"></div>
+        <div id="done_area"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 弹窗：菜品详情 -->
+  <div class="modal-mask" id="modal">
+    <div class="modal">
+      <span class="close" id="m_close">×</span>
+      <h3 id="m_title">菜品配方</h3>
+      <div id="m_body"></div>
+      <div style="margin-top:16px" class="no-print">
+        <button class="btn" id="m_print">🖨 打印此菜谱</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/mqtt.min.js"></script>
+  <script src="assets/data.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
