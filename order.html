@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>撇脱私厨 · 在线点菜</title>
+<style>
+  :root{
+    --red:#e23b2e; --red-d:#c0392b; --gold:#f5a623; --bg:#f6f1e7;
+    --card:#fff; --line:#ece3d4; --muted:#9a8f7d; --ink:#3a332b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--ink);padding-bottom:78px;max-width:560px;margin:0 auto}
+  .top{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--red),var(--red-d));
+    color:#fff;padding:14px 16px;box-shadow:0 2px 10px rgba(0,0,0,.12);
+    display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .mybtn{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.55);color:#fff;
+    border-radius:20px;padding:7px 13px;font-size:13px;white-space:nowrap;cursor:pointer}
+  .mybtn:active{background:rgba(255,255,255,.3)}
+  .saveline{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin:2px 0 12px}
+  .top h1{font-size:19px;font-weight:700;letter-spacing:.5px}
+  .top p{font-size:12px;opacity:.9;margin-top:2px}
+  .search{margin:10px 16px 0}
+  .search input{width:100%;border:1px solid var(--line);border-radius:22px;padding:10px 16px;
+    font-size:14px;background:#fff;outline:none}
+  .browse{display:flex;align-items:flex-start;gap:8px;padding:0 12px}
+  .cats{display:flex;flex-direction:column;gap:6px;flex:0 0 92px;
+    position:sticky;top:118px;max-height:calc(100vh - 140px);overflow-y:auto;
+    background:var(--bg);z-index:15;padding:4px 0}
+  .chip{display:block;width:100%;text-align:left;padding:9px 10px;border-radius:12px;
+    background:#fff;border:1px solid var(--line);font-size:13px;color:var(--muted);
+    white-space:normal;line-height:1.3;cursor:pointer}
+  .chip.on{background:var(--red);color:#fff;border-color:var(--red);font-weight:600}
+  .list{flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:4px 2px 16px}
+  .dish{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px;
+    margin-bottom:0;display:flex;flex-direction:column;gap:6px}
+  .dish .dimg{width:100%;height:92px;object-fit:cover;border-radius:10px;background:#f3ece0}
+  .dish .info{flex:1;min-width:0}
+  .dish .nm{font-size:14px;font-weight:600;line-height:1.25}
+  .dish .in{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.35;
+    overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .stepper{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+  .stepper button{width:30px;height:30px;border-radius:50%;border:none;font-size:18px;font-weight:700;
+    line-height:1;cursor:pointer}
+  .stepper .mi{background:#fff;border:1px solid var(--red);color:var(--red)}
+  .stepper .pl{background:var(--red);color:#fff}
+  .stepper .qty{min-width:18px;text-align:center;font-size:15px;font-weight:600}
+  .bar{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;z-index:30;
+    background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;gap:12px;
+    padding:10px 16px;box-shadow:0 -2px 12px rgba(0,0,0,.08)}
+  .bar .cnt{flex:1;font-size:14px}
+  .bar .cnt b{color:var(--red);font-size:17px}
+  .bar .go{background:var(--red);color:#fff;border:none;border-radius:24px;padding:11px 26px;
+    font-size:15px;font-weight:600}
+  .mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;display:none;
+    align-items:flex-end;justify-content:center}
+  .sheet{background:#fff;width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px 24px;
+    max-height:88vh;overflow-y:auto}
+  .sheet h2{font-size:18px;margin-bottom:4px}
+  .sheet .sub{font-size:12px;color:var(--muted);margin-bottom:14px}
+  .fld{margin-bottom:12px}
+  .fld label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+  .fld label .rq{color:var(--red)}
+  .fld input,.fld textarea{width:100%;border:1px solid var(--line);border-radius:10px;
+    padding:11px 12px;font-size:15px;outline:none;font-family:inherit;background:#fffdf9}
+  .fld textarea{resize:vertical;min-height:54px}
+  .cartln{display:flex;justify-content:space-between;align-items:center;padding:9px 0;
+    border-bottom:1px dashed var(--line);font-size:14px}
+  .cartln .rt{display:flex;align-items:center;gap:10px}
+  .cartln .rt button{width:26px;height:26px;border-radius:50%;border:1px solid var(--red);
+    background:#fff;color:var(--red);font-size:16px;font-weight:700;line-height:1}
+  .cartln .rt .q{min-width:18px;text-align:center}
+  .submit{width:100%;background:var(--red);color:#fff;border:none;border-radius:26px;
+    padding:14px;font-size:16px;font-weight:700;margin-top:8px}
+  .ok{text-align:center;padding:8px 4px}
+  .ok .ico{font-size:46px}
+  .ok h2{margin:6px 0 2px;font-size:20px}
+  .ok .meta{font-size:13px;color:var(--muted);line-height:1.7;margin:10px 0;text-align:left;
+    background:#faf6ee;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .ok .acts{display:flex;gap:10px;margin-top:6px}
+  .ok .acts button{flex:1;padding:12px;border-radius:22px;font-size:14px;font-weight:600;border:none}
+  .ok .copy{background:var(--red);color:#fff}
+  .ok .img{background:#fff;border:1px solid var(--line);color:var(--ink)}
+  .ok .again{margin-top:8px;width:100%;background:#fff;border:1px solid var(--line);
+    border-radius:22px;padding:11px;font-size:14px;color:var(--muted)}
+  .empty{text-align:center;color:var(--muted);padding:30px 0;font-size:14px}
+  .codebox{font-size:40px;font-weight:800;letter-spacing:4px;color:var(--red);
+    background:#fff7ef;border:2px dashed var(--red);border-radius:14px;
+    padding:14px 10px;margin:14px 0;text-align:center;font-family:"Courier New",monospace}
+  .ok .tip2{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.6}
+  /* 菜品图可点击 + 详情页 */
+  .dimg-wrap{position:relative;width:100%;height:92px;border-radius:10px;overflow:hidden;
+    cursor:pointer;background:#f3ece0}
+  .dish .dimg{width:100%;height:100%;object-fit:cover;display:block}
+  .dimg-tip{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.5);color:#fff;
+    font-size:11px;padding:2px 8px;border-radius:10px;pointer-events:none}
+  .dd-bar{position:sticky;top:-18px;display:flex;justify-content:flex-end;
+    margin:-18px -16px 4px;padding:8px 12px;background:#fff;z-index:3}
+  .dd-close{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);
+    background:#fff;color:var(--ink);font-size:15px;line-height:1;cursor:pointer}
+  .dd-close:active{background:#f3ece0}
+  .dd-img{width:100%;height:184px;object-fit:cover;border-radius:14px;background:#f3ece0;display:block}
+  .dd-name{font-size:20px;font-weight:700;margin:14px 0 4px}
+  .dd-intro{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:4px}
+  .dd-sec{font-size:14px;font-weight:700;color:#b06a3a;margin:18px 0 8px;display:flex;align-items:center}
+  .dd-sec::before{content:'';width:4px;height:14px;background:var(--red);border-radius:2px;
+    display:inline-block;margin-right:6px}
+  .dd-tags{display:flex;flex-wrap:wrap;gap:8px}
+  .dd-tag{background:#faf3e8;border:1px solid var(--line);border-radius:18px;padding:6px 12px;
+    font-size:13px;color:var(--ink)}
+  .dd-tag i{color:var(--muted);font-style:normal;font-size:12px;margin-left:4px}
+  .dd-steps{display:flex;flex-direction:column;gap:12px}
+  .dd-step{display:flex;gap:12px;align-items:flex-start}
+  .dd-ico{flex:0 0 34px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+    background:#fff3e9;border-radius:10px;font-size:22px}
+  .dd-step-bd b{font-size:14px;font-weight:600}
+  .dd-step-bd p{font-size:13px;color:var(--muted);line-height:1.5;margin-top:2px}
+  .dd-empty{color:var(--muted);font-size:13px}
+  /* 实时已选菜品清单（下单前也能看到） */
+  .cartview{position:fixed;left:0;right:0;bottom:64px;max-width:560px;margin:0 auto;z-index:28;
+    background:#fff;border-top:1px solid var(--line);box-shadow:0 -2px 12px rgba(0,0,0,.08);
+    display:none;flex-direction:column;max-height:46vh}
+  .cartview.show{display:flex}
+  .cv-head{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;
+    border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
+  .cv-head b{color:var(--red);font-size:15px}
+  .cv-head .cv-act{display:flex;align-items:center;gap:4px}
+  .cv-head .cv-btn{color:var(--muted);font-size:12px;background:none;border:none;cursor:pointer;padding:4px 6px}
+  .cv-head .cv-btn:active{color:var(--red)}
+  .cv-body{overflow-y:auto;padding:4px 12px 10px}
+  .cv-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
+  .cv-row:last-child{border-bottom:none}
+  .cv-thumb{width:46px;height:46px;border-radius:10px;object-fit:cover;flex:0 0 46px;background:#f3ece0}
+  .cv-name{flex:1;min-width:0;font-size:14px;font-weight:600;line-height:1.25;
+    overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .cv-step{display:flex;align-items:center;gap:8px}
+  .cv-step button{width:28px;height:28px;border-radius:50%;border:1px solid var(--red);
+    background:#fff;color:var(--red);font-size:16px;font-weight:700;line-height:1}
+  .cv-step button:active{background:var(--red);color:#fff}
+  .cv-step .q{min-width:16px;text-align:center;font-size:14px;font-weight:600}
+  /* 我的订单 */
+  .mo-card{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px;background:#fffdf9}
+  .mo-code{font-size:16px;font-weight:700;color:var(--red);letter-spacing:1px;margin-bottom:8px}
+  .mo-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0;color:var(--muted)}
+  .mo-row b{color:var(--ink);font-weight:600;text-align:right}
+  .mo-dishes{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;font-size:14px;color:var(--ink)}
+  .mo-dish{padding:2px 0}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="top-l">
+      <h1>撇脱私厨 · 在线点菜</h1>
+      <p>重庆家常味 · 自选菜品 · 在线点菜</p>
+    </div>
+    <button class="mybtn" onclick="openMyOrders()">我的订单</button>
+    <button class="mybtn" onclick="openProfile()">我的资料</button>
+  </div>
+
+  <div class="search"><input id="kw" placeholder="搜菜名，如 青椒 / 牛肉 / 汤" oninput="draw()"></div>
+  <div class="browse">
+    <div class="cats" id="cats"></div>
+    <div class="list" id="list"></div>
+  </div>
+
+  <!-- 实时已选菜品清单（未下单也能看到菜品图与名称） -->
+  <div class="cartview" id="cartview">
+    <div class="cv-head">
+      <span>已选菜品 <b id="cv_total">0</b> 道</span>
+      <span class="cv-act">
+        <button class="cv-btn" id="cv_toggle" onclick="cvToggle()">收起 ▲</button>
+        <button class="cv-btn" onclick="cvClear()">清空</button>
+      </span>
+    </div>
+    <div class="cv-body" id="cvbody"></div>
+  </div>
+
+  <div class="bar">
+    <div class="cnt">已选 <b id="cnt">0</b> 道菜</div>
+    <button class="go" onclick="openCheckout()">去结算</button>
+  </div>
+
+  <div class="mask" id="mask">
+    <div class="sheet" id="sheet"></div>
+  </div>
+
+  <script src="assets/mqtt.min.js"></script>
+  <script src="assets/data.js"></script>
+  <script>
+  (function(){
+    var KEY='haokang_kitchen_v1';
+    var D=window.__DATA__||{CATEGORIES:[],DISHES:[],SEED_CUSTOMERS:[],SEED_ORDERS:[],SEED_EXPENSES:[]};
+    var CATS=D.CATEGORIES, DISHES=D.DISHES;
+    var cart={};            // dishId -> qty
+    var cvOpen=true;         // 已选清单是否展开
+    var activeCat=CATS.length?CATS[0].id:'';
+
+    function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+    function today(){return new Date().toISOString().slice(0,10);}
+    function dishById(id){for(var i=0;i<DISHES.length;i++)if(DISHES[i].id===id)return DISHES[i];return null;}
+    function catName(id){for(var i=0;i<CATS.length;i++)if(CATS[i].id===id)return CATS[i].name;return '';}
+    function $(s){return document.querySelector(s);}
+
+    function loadDB(){try{var r=localStorage.getItem(KEY);if(r)return JSON.parse(r);}catch(e){}return null;}
+    function saveDB(db){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){}}
+    var PROFILE_KEY='pk_customer_profile';
+    function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    function loadProfile(){try{var r=localStorage.getItem(PROFILE_KEY);if(r)return JSON.parse(r);}catch(e){}return {name:'',phone:'',address:'',deliverAt:'',taboo:''};}
+    function saveProfile(p){try{localStorage.setItem(PROFILE_KEY,JSON.stringify(p));}catch(e){}}
+    // 实时同步：提交订单后广播，同源后台即时刷新
+    var SYNC=('BroadcastChannel' in window)?new BroadcastChannel('pk_sync'):null;
+    // 跨设备实时接单：发布到公共 MQTT broker，电脑后台订阅同一频道即可秒收
+    var MC=(typeof mqtt!=='undefined')?mqtt.connect('wss://broker.emqx.io:8084/mqtt',{clientId:'pk_cust_'+Math.random().toString(16).slice(2,12),clean:true,reconnectPeriod:4000,connectTimeout:8000}):null;
+    function nowStamp(){var d=new Date();function p(n){return(n<10?'0':'')+n;}return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());}
+
+    function renderCats(){
+      var html=CATS.map(function(c){
+        return '<div class="chip'+(c.id===activeCat?' on':'')+'" onclick="setCat(\''+c.id+'\')">'+c.name+'</div>';
+      }).join('');
+      $('#cats').innerHTML=html;
+    }
+    window.setCat=function(id){activeCat=id;$('#kw').value='';renderCats();draw();};
+
+    function draw(){
+      var kw=($('#kw').value||'').trim();
+      var html='';
+      if(kw){
+        var hit=DISHES.filter(function(d){return d.name.indexOf(kw)>-1;});
+        if(!hit.length){$('#list').innerHTML='<div class="empty">没找到「'+kw+'」相关的菜</div>';return;}
+        html=hit.map(dishCard).join('');
+      }else{
+        var inCat=CATS.filter(function(c){return c.id===activeCat;});
+        inCat.forEach(function(c){
+          var ds=DISHES.filter(function(d){return d.cat===c.id;});
+          html+=ds.map(dishCard).join('');
+        });
+        if(!html)html='<div class="empty">该分类暂无菜品</div>';
+      }
+      $('#list').innerHTML=html;
+    }
+
+    function dishCard(d){
+      var q=cart[d.id]||0;
+      var img=d.img?'<div class="dimg-wrap" onclick="openDish(\''+d.id+'\')"><img class="dimg" src="'+d.img+'" alt="'+d.name+'" onerror="this.style.display=\'none\'"><span class="dimg-tip">详情</span></div>':'';
+      return '<div class="dish">'+img+
+        '<div class="info"><div class="nm">'+d.name+'</div><div class="in">'+(d.intro||'')+'</div></div>'+
+        '<div class="stepper">'+
+          (q>0?'<button class="mi" onclick="chg(\''+d.id+'\',-1)">−</button><span class="qty">'+q+'</span>':'')+
+          '<button class="pl" onclick="chg(\''+d.id+'\',1)">＋</button>'+
+        '</div></div>';
+    }
+    window.chg=function(id,delta){
+      var cur=cart[id]||0, n=cur+delta;
+      if(n<=0)delete cart[id];else cart[id]=n;
+      draw();updateBar();
+    };
+    window.openDish=function(id){
+      var d=dishById(id);if(!d)return;
+      var img=d.img?'<img class="dd-img" src="'+d.img+'" alt="'+d.name+'" onerror="this.style.display=\'none\'">':'';
+      var ingHtml=(d.ing&&d.ing.length)?d.ing.map(function(m){
+        return '<span class="dd-tag">'+esc(m.n)+'<i>'+(m.q||'')+'</i></span>';}).join(''):'<span class="dd-empty">暂无</span>';
+      var seaHtml=(d.sea&&d.sea.length)?d.sea.map(function(m){
+        return '<span class="dd-tag">'+esc(m.n)+'<i>'+(m.g!=null?m.g+'g':'')+'</i></span>';}).join(''):'<span class="dd-empty">暂无</span>';
+      var stepHtml=(d.steps&&d.steps.length)?d.steps.map(function(s){
+        return '<div class="dd-step"><span class="dd-ico">'+(s.icon||'')+'</span>'+
+          '<div class="dd-step-bd"><b>'+esc(s.t||'')+'</b><p>'+esc(s.d||'')+'</p></div></div>';}).join(''):'<p class="dd-empty">暂无步骤</p>';
+      var html='<div class="dd-bar"><button class="dd-close" onclick="closeSheet()">✕</button></div>'+
+        '<div class="dd-top">'+img+
+          '<div class="dd-name">'+d.name+'</div>'+
+          '<div class="dd-intro">'+(d.intro||'')+'</div></div>'+
+        '<div class="dd-sec">食材</div><div class="dd-tags">'+ingHtml+'</div>'+
+        '<div class="dd-sec">调料（精确到克）</div><div class="dd-tags">'+seaHtml+'</div>'+
+        '<div class="dd-sec">制作步骤</div><div class="dd-steps">'+stepHtml+'</div>';
+      $('#sheet').innerHTML=html;
+      $('#mask').style.display='flex';
+    };
+    function updateBar(){
+      var n=Object.keys(cart).reduce(function(a,k){return a+(cart[k]||0);},0);
+      $('#cnt').textContent=n;
+      renderCartView();
+    }
+
+    // 实时已选菜品清单：下单前也能看到菜品图与名称
+    function renderCartView(){
+      var ids=Object.keys(cart).filter(function(k){return cart[k]>0;});
+      var cv=$('#cartview');
+      if(!ids.length){cv.classList.remove('show');$('#cv_total').textContent='0';$('#cvbody').innerHTML='';document.body.style.paddingBottom='78px';return;}
+      cv.classList.add('show');
+      var total=ids.reduce(function(a,k){return a+(cart[k]||0);},0);
+      $('#cv_total').textContent=total;
+      $('#cv_toggle').textContent=cvOpen?'收起 ▲':'展开 ▼';
+      var body=ids.map(function(k){
+        var d=dishById(k);if(!d)return '';
+        var thumb=d.img
+          ? '<img class="cv-thumb" src="'+d.img+'" alt="'+d.name+'" onerror="this.style.visibility=\'hidden\'">'
+          : '<div class="cv-thumb" style="display:flex;align-items:center;justify-content:center;color:#c9bda8">🍲</div>';
+        return '<div class="cv-row">'+thumb+
+          '<div class="cv-name">'+d.name+'</div>'+
+          '<div class="cv-step">'+
+            '<button onclick="chg(\''+k+'\',-1)">−</button>'+
+            '<span class="q">'+cart[k]+'</span>'+
+            '<button onclick="chg(\''+k+'\',1)">＋</button>'+
+          '</div></div>';
+      }).join('');
+      $('#cvbody').innerHTML=body;
+      $('#cvbody').style.display=cvOpen?'block':'none';
+      // 动态为清单+底栏预留空间，避免遮挡菜品列表
+      document.body.style.paddingBottom=(cv.offsetHeight+72)+'px';
+    }
+    window.cvToggle=function(){cvOpen=!cvOpen;renderCartView();};
+    window.cvClear=function(){
+      if(!Object.keys(cart).length)return;
+      if(confirm('确定清空已选菜品？')){cart={};draw();updateBar();}
+    };
+
+    function cartLines(){return Object.keys(cart).filter(function(k){return cart[k]>0;})
+      .map(function(k){return {id:k,name:dishById(k).name,qty:cart[k]};});}
+
+    function genCode(){
+      var c=String(Math.floor(100000+Math.random()*900000));
+      try{
+        var db=loadDB();
+        if(db&&db.orders){
+          var used={};
+          db.orders.forEach(function(o){if(o&&o.code)used[o.code]=1;});
+          var g=0;
+          while(used[c]&&g<100){c=String(Math.floor(100000+Math.random()*900000));g++;}
+        }
+      }catch(e){}
+      return c;
+    }
+    window.openCheckout=function(){
+      var lines=cartLines();
+      if(!lines.length)return alert('请先选择至少一道菜');
+      var p=loadProfile();
+      var html='<h2>确认订单</h2><div class="sub" style="font-size:12px;color:var(--muted);margin-bottom:14px">已自动填入默认资料，可修改；提交后生成 6 位订单码</div>';
+      html+='<div class="fld"><label>姓名 <span class="rq">*</span></label><input id="c_name" value="'+esc(p.name)+'"></div>';
+      html+='<div class="fld"><label>手机号</label><input id="c_phone" type="tel" value="'+esc(p.phone)+'"></div>';
+      html+='<div class="fld"><label>送餐地址 <span class="rq">*</span></label><input id="c_addr" value="'+esc(p.address)+'"></div>';
+      html+='<div class="fld"><label>预约送达时间</label><input id="c_deliver" placeholder="如 19:00" value="'+esc(p.deliverAt)+'"></div>';
+      html+='<div class="fld"><label>忌口 / 备注</label><textarea id="c_taboo">'+esc(p.taboo)+'</textarea></div>';
+      html+='<label class="saveline"><input type="checkbox" id="c_save" checked> 保存为我的默认资料</label>';
+      html+='<div style="font-size:13px;color:#b06a3a;font-weight:700;margin:6px 0 2px">已选菜品</div>';
+      html+=lines.map(function(l){
+        return '<div class="cartln"><span>'+l.name+'</span><span class="rt">'+
+          '<button onclick="chg(\''+l.id+'\',-1)">−</button><span class="q">'+l.qty+'</span>'+
+          '<button onclick="chg(\''+l.id+'\',1)">＋</button></span></div>';
+      }).join('');
+      html+='<button class="submit" onclick="submitOrder()">提交订单</button>';
+      $('#sheet').innerHTML=html;
+      $('#mask').style.display='flex';
+    };
+    window.openProfile=function(){
+      var p=loadProfile();
+      var html='<h2>我的资料</h2><div class="sub" style="font-size:12px;color:var(--muted);margin-bottom:14px">保存后下单自动填入，也可每次修改</div>';
+      html+='<div class="fld"><label>姓名 <span class="rq">*</span></label><input id="p_name" value="'+esc(p.name)+'"></div>';
+      html+='<div class="fld"><label>手机号</label><input id="p_phone" type="tel" value="'+esc(p.phone)+'"></div>';
+      html+='<div class="fld"><label>送餐地址 <span class="rq">*</span></label><input id="p_addr" value="'+esc(p.address)+'"></div>';
+      html+='<div class="fld"><label>默认送达时间</label><input id="p_deliver" placeholder="如 19:00" value="'+esc(p.deliverAt)+'"></div>';
+      html+='<div class="fld"><label>忌口 / 备注</label><textarea id="p_taboo">'+esc(p.taboo)+'</textarea></div>';
+      html+='<button class="submit" onclick="saveProfileSheet()">保存资料</button>';
+      $('#sheet').innerHTML=html;
+      $('#mask').style.display='flex';
+    };
+    window.saveProfileSheet=function(){
+      var p={name:$('#p_name').value.trim(),phone:$('#p_phone').value.trim(),
+        address:$('#p_addr').value.trim(),deliverAt:$('#p_deliver').value.trim(),taboo:$('#p_taboo').value.trim()};
+      if(!p.name)return alert('请填写姓名');
+      if(!p.address)return alert('请填写送餐地址');
+      saveProfile(p);
+      alert('资料已保存，下单将自动填入');
+      $('#mask').style.display='none';
+    };
+    window.closeSheet=function(){$('#mask').style.display='none';};
+
+    // 我的订单：查询本机提交过的订单（按订单码分组）
+    window.openMyOrders=function(){
+      var db=loadDB();
+      var orders=(db&&db.orders)?db.orders:[];
+      if(!orders.length){
+        $('#sheet').innerHTML='<div class="dd-bar"><button class="dd-close" onclick="closeSheet()">✕</button></div>'+
+          '<h2>我的订单</h2><div class="empty" style="padding:30px 0">暂无订单记录</div>'+
+          '<div class="sub" style="font-size:12px;color:var(--muted)">在本机/本浏览器提交过的订单会显示在这里</div>';
+        $('#mask').style.display='flex';return;
+      }
+      var groups={};
+      orders.forEach(function(o){
+        if(!o||!o.code)return;
+        if(!groups[o.code])groups[o.code]={code:o.code,custId:o.custId,deliverAt:o.deliverAt,ts:o.ts||o.date,lines:[]};
+        groups[o.code].lines.push(o);
+      });
+      var codes=Object.keys(groups);
+      window.__MO__={groups:groups,codes:codes};
+      var html='<div class="dd-bar"><button class="dd-close" onclick="closeSheet()">✕</button></div>'+
+        '<h2>我的订单</h2>'+
+        '<div class="sub" style="font-size:12px;color:var(--muted);margin-bottom:10px">输入订单码可快速查询，本机提交过的订单都在这里</div>'+
+        '<div class="fld"><input id="mo_kw" placeholder="输入订单码查询，如 123456" oninput="filterMyOrders()"></div>'+
+        '<div id="mo_list"></div>';
+      $('#sheet').innerHTML=html;
+      $('#mask').style.display='flex';
+      renderMoList('');
+    };
+    function renderMoList(kw){
+      var mo=window.__MO__;if(!mo)return;
+      kw=(kw||'').trim();
+      var db=loadDB();
+      var list=mo.codes.filter(function(c){return !kw||c.indexOf(kw)>-1;})
+        .map(function(c){return mo.groups[c];})
+        .sort(function(a,b){return (b.ts||'').localeCompare(a.ts||'');});
+      if(!list.length){$('#mo_list').innerHTML='<div class="empty">没有匹配的订单</div>';return;}
+      $('#mo_list').innerHTML=list.map(function(g){
+        var cust=(db&&db.customers)?db.customers.filter(function(x){return x.id===g.custId;})[0]:null;
+        var dishes=g.lines.map(function(o){
+          var d=dishById(o.dishId);
+          return '<div class="mo-dish">· '+(d?d.name:'已下架菜品')+' ×'+(o.qty||1)+'</div>';
+        }).join('');
+        return '<div class="mo-card">'+
+          '<div class="mo-code">订单码 '+g.code+'</div>'+
+          (cust?('<div class="mo-row"><span>联系电话</span><b>'+esc(cust.phone||'-')+'</b></div>'+
+                 '<div class="mo-row"><span>地址</span><b>'+esc(cust.address||'-')+'</b></div>'):'')+
+          '<div class="mo-row"><span>送达时间</span><b>'+esc(g.deliverAt||'尽快')+'</b></div>'+
+          '<div class="mo-dishes">'+dishes+'</div>'+
+        '</div>';
+      }).join('');
+    }
+    window.filterMyOrders=function(){renderMoList($('#mo_kw').value);};
+    $('#mask').addEventListener('click',function(e){if(e.target===this)this.style.display='none';});
+
+    window.submitOrder=function(){
+      var lines=cartLines();
+      if(!lines.length)return alert('请至少选择一道菜');
+      var name=$('#c_name').value.trim();
+      var phone=$('#c_phone').value.trim();
+      var address=$('#c_addr').value.trim();
+      var deliver=$('#c_deliver').value.trim();
+      var taboo=$('#c_taboo').value.trim();
+      if(!name)return alert('请填写姓名');
+      if(!address)return alert('请填写送餐地址');
+      if($('#c_save')&&$('#c_save').checked)saveProfile({name:name,phone:phone,address:address,deliverAt:deliver,taboo:taboo});
+      var code=genCode();
+      // 写入撇脱私厨同一存储（同源时杨存后台直接可见，并用 6 位订单码对齐）
+      var db=loadDB();
+      if(!db)db={customers:D.SEED_CUSTOMERS.slice(),orders:D.SEED_ORDERS.slice(),
+        expenses:D.SEED_EXPENSES.slice(),cleared:true};
+      var cid=uid();
+      db.customers.push({id:cid,code:code,name:name,phone:phone,address:address,offWork:'',taboo:taboo});
+      var orders=lines.map(function(l){
+        return {id:uid(),date:today(),ts:nowStamp(),custId:cid,dishId:l.id,qty:l.qty,price:0,
+          deliverAt:deliver,taboo:taboo,note:'',code:code};
+      });
+      db.orders=db.orders.concat(orders);
+      saveDB(db);
+      if(SYNC){try{SYNC.postMessage({type:'order'});}catch(e){}}
+      // 跨设备：发布到公共 broker（含新顾客信息，后台才能显示姓名/地址）
+      if(MC){try{MC.publish('haokang/orders',JSON.stringify({type:'order',customers:[{id:cid,code:code,name:name,phone:phone,address:address,offWork:'',taboo:taboo}],orders:orders}),{qos:0});}catch(e){}}
+
+      var share={code:code,customers:[{id:cid,code:code,name:name,phone:phone,address:address,offWork:'',taboo:taboo}],orders:orders};
+      showSuccess(share,code,lines,name,address,deliver,taboo);
+    };
+
+    function showSuccess(share,code,lines,name,address,deliver,taboo){
+      var html='<div class="ok"><div class="ico">✅</div><h2>下单成功</h2>'+
+        '<div class="sub" style="color:#b06a3a;font-size:13px">订单码：'+code+'（请发给店家核对）</div>'+
+        '<div class="codebox">'+code+'</div>'+
+        '<div class="meta">'+name+'　'+address+'<br>送达：'+(deliver||'尽快')+'　忌口：'+(taboo||'无')+'<br>'+
+          lines.map(function(l){return l.name+' ×'+l.qty;}).join('，')+'</div>'+
+        '<div class="acts"><button class="copy" onclick="copyCode()">复制订单码</button>'+
+        '<button class="img" onclick="saveImg()">存为图片</button></div>'+
+        '<div class="tip2">跨设备无法自动同步？<a onclick="copyFull()" style="color:#e23b2e;text-decoration:underline">点此复制完整订单给店家导入</a></div>'+
+        '<button class="again" onclick="again()">再下一单</button></div>';
+      $('#sheet').innerHTML=html;
+      window.__SHARE__=share;window.__CODE__=code;
+    }
+    window.copyCode=function(){
+      var t=window.__CODE__||'';
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(t).then(function(){alert('订单码已复制：'+t);},
+          function(){fallbackCopy(t);});
+      }else fallbackCopy(t);
+    };
+    window.copyFull=function(){
+      var s=window.__SHARE__;if(!s)return;
+      var t=JSON.stringify(s);
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(t).then(function(){alert('完整订单已复制，发给店家粘贴导入即可');},
+          function(){fallbackCopy(t);});
+      }else fallbackCopy(t);
+    };
+    function fallbackCopy(t){
+      var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();
+      try{document.execCommand('copy');alert('订单码已复制，发给店家即可');}catch(e){alert('复制失败，请手动长按选择');}
+      document.body.removeChild(ta);
+    }
+    window.again=function(){cart={};updateBar();$('#mask').style.display='none';draw();};
+    window.saveImg=function(){
+      var s=window.__SHARE__;if(!s)return;
+      var c=s.customers[0];
+      var lines=s.orders.map(function(o){var d=dishById(o.dishId);return (d?d.name:'?')+' ×'+o.qty;});
+      var W=640;
+      var H=300+lines.length*34+40;
+      var cv=document.createElement('canvas');cv.width=W;cv.height=H;
+      var x=cv.getContext('2d');
+      x.fillStyle='#fff';x.fillRect(0,0,W,H);
+      x.fillStyle='#e23b2e';x.fillRect(0,0,W,64);
+      x.fillStyle='#fff';x.font='bold 26px sans-serif';x.fillText('撇脱私厨 · 订单码',24,40);
+      x.fillStyle='#3a332b';x.font='bold 42px monospace';
+      x.fillText(String(s.code||''),24,118);
+      x.fillStyle='#9a8f7d';x.font='14px sans-serif';
+      x.fillText('（将订单码发给店家核对）',24,148);
+      x.fillStyle='#3a332b';x.font='16px sans-serif';
+      var y=182;
+      x.fillText('姓名：'+c.name,24,y);y+=28;
+      x.fillText('电话：'+(c.phone||'-'),24,y);y+=28;
+      x.fillText('地址：'+c.address,24,y);y+=28;
+      x.fillText('送达：'+(s.orders[0].deliverAt||'尽快'),24,y);y+=28;
+      x.fillText('忌口：'+(c.taboo||'无'),24,y);y+=34;
+      x.fillStyle='#b06a3a';x.font='bold 18px sans-serif';x.fillText('菜品',24,y);y+=28;
+      x.fillStyle='#3a332b';x.font='18px sans-serif';
+      lines.forEach(function(t){x.fillText('· '+t,40,y);y+=34;});
+      var a=document.createElement('a');a.download='撇脱私厨订单码.png';a.href=cv.toDataURL('image/png');a.click();
+    };
+
+    // init
+    renderCats();draw();updateBar();
+  })();
+  </script>
+</body>
+</html>
